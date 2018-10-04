@@ -35,6 +35,7 @@ var pool  = mysql.createPool({
   });
 
 var send_push_online = true;
+var send_push_offline = false;
 
 //Funcao que deleta os pontos que não foram clamados pelos viewers no applicativo
 function deleta(error, response, body) {	
@@ -82,10 +83,31 @@ function callbackViewers(error, response, body) {
 function callbackStreamer(error, response, body) { 
   if (!error && response.statusCode == 200) {
 	var info = JSON.parse(body);	
-	if(info.stream==='null'){
-		//Streamer estava online, entao a proxima vez que ficar online, vai mandar a push
-		send_push_online = true
-	}else{
+	if(typeof info.stream._id == 'undefined'){
+		console.log('Streamer Offline');
+		//Primeiramente verifica se eh a primeira vez que fica offline, depois de estar online. Se sim, envia um push que ficou offline
+		if(send_push_offline){
+			var topic = 'barca_velha';	
+			var message = {
+			  notification: {
+				title: 'Barca Velha Offline',
+				body: 'Não esqueçam de resgatar seus pontos!!!'
+			  },
+			   topic: topic
+			};			
+			admin.messaging().send(message)
+			.then((response) => {
+			console.log('Successfully sent message:', response);
+			})
+			.catch((error) => {
+			console.log('Error sending message:', error);
+			});
+		}
+		//Streamer estava offline, entao a proxima vez que ficar online, vai mandar a push
+		send_push_online = true;
+		send_push_offline = false;			
+	}else if(typeof info.stream._id != 'undefined'){
+		console.log('Streamer Online');
 		//O Streamer esta online e so envia a push se o backend esta executando pela primeira vez isso, ou se
 		//o Streamer estava offline na ultima vez que executou esse CRON
 		if(send_push_online){
@@ -93,20 +115,20 @@ function callbackStreamer(error, response, body) {
 			var topic = 'barca_velha';	
 			var message = {
 			  notification: {
-				title: 'Barca Velha ',
-				body: 'Estou Online Marujos!!!!!!'
+				title: 'Barca Velha Online',
+				body: 'Venham acumular pontos Marujos!'
 			  },
 			   topic: topic
 			};			
 			admin.messaging().send(message)
 			.then((response) => {
-
 			console.log('Successfully sent message:', response);
 			})
 			.catch((error) => {
 			console.log('Error sending message:', error);
 			});
 			send_push_online = false;
+			send_push_offline = true;
 		}
 		//Fazer Pontuacao de Todos os Chatters online	
 		var options = {
@@ -120,9 +142,9 @@ function callbackStreamer(error, response, body) {
   }
 }
 
-
+//Funcao principal que verifica se o Streamer esta online, envia as push e cria a tabela de pontuacao
 var streamerOnline = new CronJob({
-  cronTime: '0 */10 * * * *',
+  cronTime: '0 */20 * * * *',
   onTick: function() {
 	var options = {
 	  url: 'https://api.twitch.tv/kraken/streams/gratis150ml',
@@ -136,6 +158,7 @@ var streamerOnline = new CronJob({
   timeZone: 'America/Sao_Paulo'
 });
 
+//Funcao que deleta os pontos que nao foram resgatados e ja tem mais de 24horas de criação
 var deletaPontos = new CronJob({
   cronTime: '00 00 10 * * 0-6',
   onTick: function() {
