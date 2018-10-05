@@ -83,7 +83,7 @@ function callbackViewers(error, response, body) {
 function callbackStreamer(error, response, body) { 
   if (!error && response.statusCode == 200) {
 	var info = JSON.parse(body);	
-	if(typeof info.stream._id == 'undefined'){
+	if(info.stream===null){		
 		console.log('Streamer Offline');
 		//Primeiramente verifica se eh a primeira vez que fica offline, depois de estar online. Se sim, envia um push que ficou offline
 		if(send_push_offline){
@@ -105,8 +105,9 @@ function callbackStreamer(error, response, body) {
 		}
 		//Streamer estava offline, entao a proxima vez que ficar online, vai mandar a push
 		send_push_online = true;
-		send_push_offline = false;			
-	}else if(typeof info.stream._id != 'undefined'){
+		send_push_offline = false;		
+	//}else if(typeof info.stream._id != 'undefined'){
+    }else{
 		console.log('Streamer Online');
 		//O Streamer esta online e so envia a push se o backend esta executando pela primeira vez isso, ou se
 		//o Streamer estava offline na ultima vez que executou esse CRON
@@ -132,6 +133,7 @@ function callbackStreamer(error, response, body) {
 		}
 		//Fazer Pontuacao de Todos os Chatters online	
 		var options = {
+		  //url: 'https://tmi.twitch.tv/group/user/themunchdown/chatters',
 		  url: 'https://tmi.twitch.tv/group/user/gratis150ml/chatters',
 		  headers: {
 			'Client-Id': '67lx0lep7n77mav8o20ncg1sch26ke'
@@ -147,6 +149,7 @@ var streamerOnline = new CronJob({
   cronTime: '0 */20 * * * *',
   onTick: function() {
 	var options = {
+	  //url: 'https://api.twitch.tv/kraken/streams/themunchdown',
 	  url: 'https://api.twitch.tv/kraken/streams/gratis150ml',
 	  headers: {
 		'Client-Id': '67lx0lep7n77mav8o20ncg1sch26ke'
