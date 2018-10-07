@@ -151,7 +151,7 @@ function callbackStreamer(error, response, body) {
 
 //Funcao principal que verifica se o Streamer esta online, envia as push e cria a tabela de pontuacao
 var streamerOnline = new CronJob({
-  cronTime: '0 */1 * * * *',
+  cronTime: '0 */20 * * * *',
   onTick: function() {
 	var options = {
 	  //url: 'https://api.twitch.tv/kraken/streams/themunchdown',
@@ -168,7 +168,7 @@ var streamerOnline = new CronJob({
 
 //Funcao que deleta os pontos que nao foram resgatados e ja tem mais de 24horas de criação
 var deletaPontos = new CronJob({
-  cronTime: '0 */1 * * * *',
+  cronTime: '00 00 10 * * 0-6',
   onTick: function() {
 	deleta();
   },
