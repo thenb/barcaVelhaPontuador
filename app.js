@@ -41,7 +41,10 @@ var send_push_offline = false;
 function deleta(error, response, body) {	
 	pool.getConnection(function(err, connection) {	
 		var string = "delete from pontos where data_pontuacao < (SELECT NOW() - INTERVAL 1 DAY);";
-		console.log(string);		
+		console.log(string);
+		var dt = new Date();
+		var utcDate = dt.toUTCString(); 
+		console.log(utcDate);			
 		connection.query(string, function(err, data2) {
 			if (err){
 				var error = {};
@@ -84,7 +87,9 @@ function callbackStreamer(error, response, body) {
   if (!error && response.statusCode == 200) {
 	var info = JSON.parse(body);	
 	if(info.stream===null){		
-		console.log('Streamer Offline');
+		var dt = new Date();
+		var utcDate = dt.toUTCString(); 
+		console.log('Streamer Offline ' + utcDate);		
 		//Primeiramente verifica se eh a primeira vez que fica offline, depois de estar online. Se sim, envia um push que ficou offline
 		if(send_push_offline){
 			var topic = 'barca_velha';	
@@ -146,7 +151,7 @@ function callbackStreamer(error, response, body) {
 
 //Funcao principal que verifica se o Streamer esta online, envia as push e cria a tabela de pontuacao
 var streamerOnline = new CronJob({
-  cronTime: '0 */20 * * * *',
+  cronTime: '0 */1 * * * *',
   onTick: function() {
 	var options = {
 	  //url: 'https://api.twitch.tv/kraken/streams/themunchdown',
@@ -163,7 +168,7 @@ var streamerOnline = new CronJob({
 
 //Funcao que deleta os pontos que nao foram resgatados e ja tem mais de 24horas de criação
 var deletaPontos = new CronJob({
-  cronTime: '00 00 10 * * 0-6',
+  cronTime: '0 */1 * * * *',
   onTick: function() {
 	deleta();
   },
@@ -171,7 +176,7 @@ var deletaPontos = new CronJob({
   timeZone: 'America/Sao_Paulo'
 });
 
-streamerOnline.start();
+//streamerOnline.start();
 deletaPontos.start();
 
 //configuracao para o heroku
