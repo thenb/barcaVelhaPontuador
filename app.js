@@ -176,7 +176,7 @@ var deletaPontos = new CronJob({
   timeZone: 'America/Sao_Paulo'
 });
 
-//streamerOnline.start();
+streamerOnline.start();
 deletaPontos.start();
 
 //configuracao para o heroku
